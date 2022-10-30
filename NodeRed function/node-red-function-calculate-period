@@ -1,0 +1,85 @@
+//Settings
+var startHour = 20; //0= 00:00:00, 12=12:00:00, 24=00:00:00 (day 2), 
+var endHour = 31;
+var chargingTime = 4;
+var PowerNeedIn = 7.36; //kWh
+
+//Internal var
+var sum = 0;
+var i = 0;
+var chargingTimeEnd = 0;
+var array;
+var sumArray;
+
+//Output
+var outputValue = 0;
+var outputStartHour = 0;
+var outputHours = 0;
+
+//Load payload
+array = msg.payload
+
+//Debug line 1
+msg.array = array;
+
+//Debug line 2
+var indexArray = array; //[];
+indexArray = indexArray.slice(startHour, endHour);
+
+msg.indexArray = indexArray;
+
+chargingTimeEnd = indexArray.length - chargingTime;
+
+for ( i = 0; i <= chargingTimeEnd; i++) {
+    var chargingIndex = chargingTime + i;
+    sumArray = indexArray.slice(i, chargingIndex);
+
+    sum = sumArray.reduce(function (a, b) {
+        return a + b;
+    }, 0);
+
+    if (outputValue > sum || outputValue == 0) {
+        outputValue = sum;
+        //Debug line 3 - Start hour 
+        msg.i = i;
+        //Debug line 4 - Price in period 
+        msg.price = indexArray.slice(i);
+
+        if ((i + startHour) < 23) {
+            outputStartHour = startHour + i;
+        }
+        else {
+            outputStartHour = i - (24 - startHour);
+        }
+
+    }
+    outputHours = sumArray;
+}
+
+if (outputStartHour > 10) {
+    var outputStartHourTimeFormat = +outputStartHour + ':00'
+} else {
+    outputStartHourTimeFormat = '0' + outputStartHour + ':00'
+}
+
+outputValue = parseFloat(outputValue).toFixed( 2 );
+
+var avaragePricePrKWH = parseFloat((outputValue/chargingTime)).toFixed( 2 );
+
+var EstimatedPriceInChargingPeriode = parseFloat(((outputValue/chargingTime)*PowerNeedIn)).toFixed( 2 );
+
+msg.payload = 
+
+    
+    '{"totalSum":' +outputValue+','
+    
+    +'"avaragePricePrKWH":' +avaragePricePrKWH+','
+    
+    +'"EstimatedPriceInChargingPeriode":' +EstimatedPriceInChargingPeriode+','
+    
+    +'"outputStartHour":"' +outputStartHourTimeFormat+'",'
+    
+    +'"chargingTime":' +chargingTime+'}'
+    
+   
+return msg;
